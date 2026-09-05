@@ -1,13 +1,7 @@
--- CP77 EZGodMode mod 
--- This mod will give you as close to God Mode as possible in Cyberpunk 2077
--- with the following features:
--- 	- (maxStats) - Maxes out all your current stats and weight limit
--- 	- (maxExperience) - Maxes out your experience level
--- 	- (addMoneys) - Adds "One Million Dollars" (insert Austin Powers meme here)
--- 	- (addCyberware) - Adds all cyberware - NOT WORKING YET. Don't save and load
--- 	- (addAllItems) - Adds all legendary items
-
--- Copyright (C) 2021-2024 Jon West <electrikjesus@gmail.com>
+-- ChoomAssist for Cyberpunk 2077
+-- Accessibility overlay (CET-only). Replaces the old EZGodMode hotkey mod.
+--
+-- Copyright (C) 2021-2026 Jon West <electrikjesus@gmail.com>
 --
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -22,120 +16,145 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+local Compat = require("compat.lua")
+local Assists = require("assists.lua")
+local Graphics = require("graphics.lua")
+local QoL = require("qol.lua")
+local UI = require("ui.lua")
+
+local SETTINGS_FILE = "settings.json"
+
+local function encode(settings)
+    if json and json.encode then
+        return json.encode(settings)
+    end
+    return nil
+end
+
+local function decode(raw)
+    if json and json.decode then
+        local ok, settings = pcall(json.decode, raw)
+        if ok then
+            return settings
+        end
+    end
+    return nil
+end
+
+local function collectSettings()
+    return {
+        assists = Assists.exportState(),
+        graphics = Graphics.export(),
+        qol = QoL.export(),
+    }
+end
+
+local function saveSettings()
+    local encoded = encode(collectSettings())
+    if encoded == nil then
+        return
+    end
+    local file = io.open(SETTINGS_FILE, "w")
+    if file then
+        file:write(encoded)
+        file:close()
+    end
+end
+
+local function loadSettings()
+    local file = io.open(SETTINGS_FILE, "r")
+    if not file then
+        Assists.ensureState()
+        return
+    end
+    local raw = file:read("*a")
+    file:close()
+    local settings = decode(raw)
+    if type(settings) ~= "table" then
+        Assists.ensureState()
+        return
+    end
+    Assists.loadState(settings.assists)
+    QoL.loadState(settings.qol)
+    Graphics.applySaved(settings.graphics)
+end
+
+local function onPlayerAttached(self)
+    if self == nil then
+        return
+    end
+    local skip = false
+    pcall(function()
+        if self:IsReplacer() then
+            skip = true
+        end
+    end)
+    if skip then
+        return
+    end
+    Assists.reapplyAll()
+    QoL.reapplyStealth()
+end
+
+local function onPlayerDetach(self)
+    if self == nil then
+        return
+    end
+    local skip = false
+    pcall(function()
+        if self:IsReplacer() then
+            skip = true
+        end
+    end)
+    if skip then
+        return
+    end
+    Assists.clearHandles()
+    QoL.clearStealthHandles()
+end
 
 registerForEvent("onInit", function()
-	drawPopup = false
-	wWidth, wHeight = GetDisplayResolution()
-	getTime = 0
-	print("************************************************")
-	print("* EZGodMode Mod Loaded...                      *")
-	print("************************************************")
+    UI.setSaveHandler(saveSettings)
+    loadSettings()
+    Observe("PlayerPuppet", "OnGameAttached", onPlayerAttached)
+    Observe("PlayerPuppet", "OnDetach", onPlayerDetach)
+    print("************************************************")
+    print("* ChoomAssist loaded (CET overlay, no hotkeys required)")
+    print("************************************************")
 end)
 
-function godMode()
+registerForEvent("onOverlayOpen", function()
+    UI.overlayOpen = true
+end)
 
-	-- Memory
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.Memory,gameStatModifierType.AdditiveMultiplier,10))
+registerForEvent("onOverlayClose", function()
+    UI.overlayOpen = false
+end)
 
-	-- Damage
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.CritChance,gameStatModifierType.Additive,100))
-    Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.CritDamage,gameStatModifierType.Additive,999999))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.DamageReductionExplosion,gameStatModifierType.AdditiveMultiplier,50))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.DamageReductionDamageOverTime,gameStatModifierType.AdditiveMultiplier,50))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.FallDamageReduction,gameStatModifierType.AdditiveMultiplier,2000))
-	
-	-- Weight
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.CarryCapacity,gameStatModifierType.AdditiveMultiplier,50))
-	
-	-- Health
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.Armor,gameStatModifierType.AdditiveMultiplier,100))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.Adrenaline,gameStatModifierType.AdditiveMultiplier,50))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.Oxygen,gameStatModifierType.AdditiveMultiplier,50))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.HealingItemMaxCharges,gameStatModifierType.AdditiveMultiplier,100))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.HealingItemsRechargeDuration,gameStatModifierType.Multiplier,0.1))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.HealingItemsCharges,gameStatModifierType.AdditiveMultiplier,100))
-	
-	-- Strength & Abilities
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.StrengthSkillCheckBonus,gameStatModifierType.Additive,20))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.IntelligenceSkillCheckBonus,gameStatModifierType.Additive,20))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.TechnicalSkillCheckBonus,gameStatModifierType.Additive,20))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.MinigameTimeLimitExtension,gameStatModifierType.AdditiveMultiplier,10))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.MinigameMaterialsEarned,gameStatModifierType.AdditiveMultiplier,10))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.RestoreMemoryOnDefeat,gameStatModifierType.AdditiveMultiplier,10))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.QuickHackSpreadDistance,gameStatModifierType.AdditiveMultiplier,8))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.QuickHackSpreadNumber,gameStatModifierType.AdditiveMultiplier,4))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.UltimateMemoryCostReduction,gameStatModifierType.AdditiveMultiplier,10))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.DeviceMemoryCostReduction,gameStatModifierType.AdditiveMultiplier,10))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.StealthHacksCostReduction,gameStatModifierType.AdditiveMultiplier,10))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.HasSmartLink,gameStatModifierType.AdditiveMultiplier,1))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.HasDodge,gameStatModifierType.AdditiveMultiplier,1))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.CanCrouch,gameStatModifierType.AdditiveMultiplier,1))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.CanSprint,gameStatModifierType.AdditiveMultiplier,1))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.CanJump,gameStatModifierType.AdditiveMultiplier,1))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.HasDoubleJump,gameStatModifierType.AdditiveMultiplier,1))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.CWMaskRechargeDuration,gameStatModifierType.Multiplier,0.1))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.CWMaskMaxCharges,gameStatModifierType.AdditiveMultiplier,100))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.ProjectileLauncherMaxCharges,gameStatModifierType.AdditiveMultiplier,100))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.ProjectileLauncherRechargeDuration,gameStatModifierType.Multiplier,0.1))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.CyberdeckOverclockCooldown,gameStatModifierType.Multiplier,0.1))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.GrenadesMaxCharges,gameStatModifierType.AdditiveMultiplier,100))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.GrenadesRechargeDuration,gameStatModifierType.Multiplier,0.1))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.HousingBuffsDurationBonus,gameStatModifierType.AdditiveMultiplier,100))
-	-- Stamina
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.Stamina,gameStatModifierType.Additive,99999999))
+registerForEvent("onDraw", function()
+    UI.draw()
+end)
 
-	Game.GetPlayer():SetWarningMessage("'I is Stuper-Hero now' toggled")
-	print("Super-Hero Mode set by keypress")
-		
-end
+-- Optional hotkeys. Bind them in CET if you want; the overlay does not need them.
+registerHotkey("ChoomAssist_classicAllAssists", "ChoomAssist: Classic all-assists", function()
+    QoL.classicAllAssists()
+    saveSettings()
+end)
 
-function addMoneys()
-	-- Moneys
-	Game.AddToInventory("Items.money",999999999)
-	Game.GetPlayer():SetWarningMessage("'I can has moneys' toggled")
-	print("Unlimited Money set by keypress")
-end
+registerHotkey("ChoomAssist_addMoney", "ChoomAssist: Add eddies", function()
+    QoL.addMoney()
+end)
 
-function enableHackerman()
-	--Solo Skill
-	Game.AddToInventory("Items.BodySkill_Skillbook")
-	Game.AddToInventory("Items.BodySkill_Skillbook_Legendary")
-	--HeadHunter Skill
-	Game.AddToInventory("Items.CoolSkill_Skillbook")
-	Game.AddToInventory("Items.CoolSkill_Skillbook_Legendary")
-	--Netrunner Skill	
-	Game.AddToInventory("Items.IntelligenceSkill_Skillbook")	
-	Game.AddToInventory("Items.IntelligenceSkill_Skillbook_Legendary")	
-	--Shinobi Skill	
-	Game.AddToInventory("Items.ReflexSkillbook_Skillbook")	
-	Game.AddToInventory("Items.ReflexSkillbook_Skillbook_Legendary")	
-	--Engineer Skill	
-	Game.AddToInventory("Items.TechnicalAbilitySkill_Skillbook")	
-	Game.AddToInventory("Items.TechnicalAbilitySkill_Skillbook_Legendary")	
-	--Relic Points	
-	Game.AddToInventory("Items.Espionage_Skillbook")
-	-- Perk Points
-	Game.AddToInventory("Items.PerkPointSkillbook")
-	Game.AddToInventory("Items.AttributePointSkillbook", 1)
-	print("Hackerman set by keypress")
-end
+registerHotkey("ChoomAssist_fullStealth", "ChoomAssist: Toggle full stealth", function()
+    QoL.state.fullStealth = not QoL.state.fullStealth
+    QoL.applyFullStealth()
+    saveSettings()
+end)
 
-function enableStealth()
-	-- Stealth	
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.Visibility,gameStatModifierType.AdditiveMultiplier,0))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.TBHsVisibilityCooldown,gameStatModifierType.AdditiveMultiplier,0))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.OpticalCamoRechargeDuration,gameStatModifierType.Multiplier,0.1))
-	
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.Detection,gameStatModifierType.AdditiveMultiplier,0))
-	
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.Evasion,gameStatModifierType.Additive,999))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.MitigationChance,gameStatModifierType.Additive,999))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.MitigationStrength,gameStatModifierType.AdditiveMultiplier,20))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.QuickHackImmunity,gameStatModifierType.AdditiveMultiplier,50))
-	Game.GetStatsSystem():AddModifier(Game.GetPlayer():GetEntityID(),RPGManager.CreateStatModifier(gamedataStatType.QuickHackShield,gameStatModifierType.AdditiveMultiplier,50))
-end
-
-registerHotkey("godMode", "godMode", godMode)
-registerHotkey("addMoneys", "addMoneys", addMoneys)
-registerHotkey("enableStealth", "enableStealth", enableStealth)
-registerHotkey("enableHackerman", "enableHackerman", enableHackerman)
+registerHotkey("ChoomAssist_infiniteStamina", "ChoomAssist: Toggle infinite stamina", function()
+    Assists.ensureState()
+    local state = Assists.state.infiniteStamina
+    state.enabled = not state.enabled
+    Assists.commit("infiniteStamina")
+    saveSettings()
+end)
