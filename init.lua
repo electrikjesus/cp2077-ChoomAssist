@@ -1,5 +1,5 @@
 -- ChoomAssist for Cyberpunk 2077
--- Accessibility overlay (CET-only). Replaces the old EZGodMode hotkey mod.
+-- Accessibility overlay (CET-only).
 --
 -- Copyright (C) 2021-2026 Jon West <electrikjesus@gmail.com>
 --

@@ -338,45 +338,11 @@ function QoL.grantCategory(group)
 end
 
 function QoL.clearStealthHandles()
-    for _, handle in ipairs(QoL.stealthHandles) do
-        Compat.removeModifier(handle)
-    end
-    QoL.stealthHandles = {}
+    -- Stealth extras now live as Combat Comfort rows in Assists.
 end
 
 function QoL.applyFullStealth()
-    QoL.clearStealthHandles()
-    if not QoL.state.fullStealth then
-        return
-    end
-    if not Compat.inSession() then
-        return
-    end
-    local maps = {
-        { "Detection", "Multiplier", 0.05 },
-        { "Visibility", "Multiplier", 0.05 },
-        { "TBHsVisibilityCooldown", "Multiplier", 0.1 },
-        { "OpticalCamoRechargeDuration", "Multiplier", 0.1 },
-        { "Evasion", "Additive", 50 },
-        { "MitigationChance", "Additive", 50 },
-        { "MitigationStrength", "AdditiveMultiplier", 1 },
-        { "QuickHackImmunity", "AdditiveMultiplier", 1 },
-        { "QuickhackShield", "AdditiveMultiplier", 1 },
-    }
-    local any = false
-    for _, map in ipairs(maps) do
-        local handle = Compat.addModifier(map[1], map[2], map[3])
-        if handle then
-            table.insert(QoL.stealthHandles, handle)
-            any = true
-        end
-    end
-    if any then
-        Compat.status("Full stealth assist on.")
-    else
-        Compat.status("Full stealth doesn't work on this patch.")
-        QoL.state.fullStealth = false
-    end
+    Assists.applyStealthBundle(QoL.state.fullStealth == true)
 end
 
 function QoL.reapplyStealth()
