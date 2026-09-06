@@ -30,7 +30,7 @@ Don't run an old copy and ChoomAssist at the same time.
 - **Visual Comfort**: motion blur, film grain, chromatic aberration, depth of field, bloom, flares, heat haze, and similar.
 - **Performance**: shadows, GI, fog, screen-space, crowds, async compute. Low-End, Balanced, and Reset to Vanilla presets.
 - **Quality of Life**: eddies, level / Street Cred / attributes, skillbooks, cyberware and item grants, Classic all-assists, full stealth. Cyberware goes to inventory; equip it at a ripper.
-- **Help**: what Classic all-assists actually turns on, and how to set crit without that button.
+- **Help**: longer descriptions of every option on every tab, including what Classic and Full stealth do and do not change.
 
 Settings save to `settings.json` in this folder. Play Assist and Combat Comfort come back when you load a save.
 

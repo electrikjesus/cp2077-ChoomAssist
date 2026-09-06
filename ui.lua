@@ -6,6 +6,7 @@ local Compat = require("compat.lua")
 local Assists = require("assists.lua")
 local Graphics = require("graphics.lua")
 local QoL = require("qol.lua")
+local Help = require("help.lua")
 
 local UI = {
     overlayOpen = false,
@@ -306,58 +307,8 @@ local function drawQoLTab()
     end
 end
 
-local function bullet(text)
-    ImGui.TextWrapped("- " .. text)
-end
-
 local function drawHelpTab()
-    ImGui.TextWrapped("How ChoomAssist works. Hover any control for the same text. Tick a checkbox to turn a row on, then use the slider if there is one. Untick to turn it off. Load a save before gameplay assists and Quality of Life buttons will apply.")
-    ImGui.Spacing()
-
-    if ImGui.CollapsingHeader("Tabs") then
-        bullet("Play Assist: carry, falls, healing (speed / max charges / charges), stamina, oxygen, breach time and loot, Body/Int/Tech skill checks, RAM, RAM on takedown, ultimate/device/stealth hack costs, grenades, launcher, camo mask, overclock, apartment buffs, movement flags.")
-        bullet("Combat Comfort: armor, explosion/DoT, adrenaline, detection, visibility, TBH cooldown, mitigation chance/strength, crit, quickhack spread distance/targets. Optical camo, evasion, and hack immunity/shield are Full stealth extras on this tab.")
-        bullet("Visual Comfort: turn off blur, grain, chromatic aberration, and similar screen effects.")
-        bullet("Performance: turn off shadows, fog, crowds, and other heavy graphics for slower PCs.")
-        bullet("Quality of Life: one-shot grants (money, level, books, items) plus Classic all-assists and Full stealth.")
-    end
-
-    if ImGui.CollapsingHeader("Classic all-assists") then
-        ImGui.TextWrapped("The button on Quality of Life maxes every Play Assist and Combat Comfort row that has its own slider or switch. It is not a hidden pack anymore. After you press it, those tabs show every classic row ticked at maximum. Crit chance will be 100% and One-shot crit damage will be on.")
-        ImGui.Spacing()
-        ImGui.TextWrapped("It turns on:")
-        bullet("Play Assist at max (infinite stamina instead of Extra stamina), including each gadget, hack cost, and skill-check row separately.")
-        bullet("Combat Comfort at max, including Crit chance 100%, One-shot crit damage, detection/visibility/TBH, mitigation chance and strength, and spread distance/targets.")
-        ImGui.Spacing()
-        ImGui.TextWrapped("It does not:")
-        bullet("Add eddies, items, skillbooks, level, or Street Cred.")
-        bullet("Set attributes or grant perk points.")
-        bullet("Turn on Full stealth extras: optical camo recharge, evasion, quickhack immunity, or quickhack shield. Use the Full stealth checkbox or tick those Combat Comfort rows yourself.")
-        bullet("Change Visual Comfort or Performance graphics.")
-        ImGui.Spacing()
-        ImGui.TextWrapped("Turn it off with Turn off all assists on Play Assist, Combat Comfort, or Quality of Life.")
-    end
-
-    if ImGui.CollapsingHeader("Full stealth extras") then
-        ImGui.TextWrapped("Classic all-assists does not include these. They are on Combat Comfort, and the Full stealth checkbox turns them all on at once:")
-        bullet("Faster optical camo recharge")
-        bullet("Extra evasion")
-        bullet("Quickhack immunity")
-        bullet("Quickhack shield")
-        ImGui.Spacing()
-        ImGui.TextWrapped("Full stealth also pushes detection, visibility, TBH cooldown, and mitigation to strong values. Unticking Full stealth turns the four extras off and leaves the detection/mitigation sliders as they are.")
-    end
-
-    if ImGui.CollapsingHeader("How to get high crit without Classic") then
-        ImGui.TextWrapped("Open Combat Comfort (not Play Assist, not the QoL sliders).")
-        bullet("Tick Crit chance and drag it to 100% for always-crit.")
-        bullet("Tick One-shot crit damage for the huge crit damage Classic uses.")
-        bullet("Or tick Crit damage bonus and pick a smaller number if you do not want one-shots. One-shot and Crit damage bonus cannot both be on.")
-    end
-
-    if ImGui.CollapsingHeader("Vanilla game settings") then
-        ImGui.TextWrapped("Settings > Accessibility in the game menu still handles bigger fonts, bigger HUD, and HUD chromatic aberration. ChoomAssist does not replace those.")
-    end
+    Help.draw()
 end
 
 function UI.draw()
@@ -369,7 +320,7 @@ function UI.draw()
     ImGui.SetNextWindowSize(600, 700, ImGuiCond.FirstUseEver)
     local visible = ImGui.Begin("ChoomAssist")
     if visible then
-        ImGui.TextWrapped("Accessibility and quality-of-life for Cyberpunk 2077. Opens with the CET overlay. The Help tab explains Classic all-assists and crit.")
+        ImGui.TextWrapped("Accessibility and quality-of-life for Cyberpunk 2077. Opens with the CET overlay. The Help tab describes every option on every tab.")
         ImGui.Spacing()
         if ImGui.BeginTabBar("ChoomAssistTabs") then
             if ImGui.BeginTabItem("Play Assist") then
