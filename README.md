@@ -8,8 +8,8 @@ The game already has Settings > Accessibility for bigger fonts, bigger HUD, and 
 
 ## Requirements
 
-- Cyberpunk 2077 **2.31**
-- [Cyber Engine Tweaks](https://www.nexusmods.com/cyberpunk2077/mods/107) **1.37.0** or newer (the CET build that supports 2.31)
+- Cyberpunk 2077 **2.5** (Clampdown / Reaper chip) or **2.31**+
+- [Cyber Engine Tweaks](https://www.nexusmods.com/cyberpunk2077/mods/107) **1.37.0** or newer (the CET build that supports your patch)
 
 No other mods. No Native Settings, redscript, or ArchiveXL.
 
@@ -25,7 +25,7 @@ Don't run an old copy and ChoomAssist at the same time.
 
 ## Tabs
 
-- **Play Assist**: carry, falls, healing (speed / charges), stamina, oxygen, breach time and loot, Body / Intelligence / Technical skill checks, RAM, RAM on takedown, ultimate / device / stealth hack costs, grenades, launcher, camo mask, overclock, apartment buffs, movement flags. Tick a row, then use the slider.
+- **Play Assist**: carry, falls, healing (speed / charges), stamina, oxygen, breach time and loot, Body / Intelligence / Technical skill checks, RAM, RAM on takedown, ultimate / device / stealth hack costs, grenades, launcher, camo mask, overclock, apartment buffs, movement flags, Reaper chip safety (Clampdown). Tick a row, then use the slider.
 - **Combat Comfort**: armor, explosion / DoT, adrenaline, detection, visibility, TBH cooldown, mitigation chance / strength, crit chance, crit damage, one-shot crits, quickhack spread distance / targets. Optical camo, evasion, and hack immunity / shield are Full stealth extras on this tab.
 - **Visual Comfort**: motion blur, film grain, chromatic aberration, depth of field, bloom, flares, heat haze, and similar.
 - **Performance**: shadows, GI, fog, screen-space, crowds, async compute. Low-End, Balanced, and Reset to Vanilla presets.

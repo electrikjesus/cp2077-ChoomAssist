@@ -324,7 +324,7 @@ function UI.draw()
         ImGui.Spacing()
         if ImGui.BeginTabBar("ChoomAssistTabs") then
             if ImGui.BeginTabItem("Play Assist") then
-                drawAssistTab("play", "Tick a row to turn it on, then set how much with the slider. Untick to restore the game default. Rows are split so grenades, RAM, skill checks, and hack costs can be set one at a time. These persist in settings.json and come back when you load a save.")
+                drawAssistTab("play", "Tick a row to turn it on, then set how much with the slider. Untick to restore the game default. Rows are split so grenades, RAM, skill checks, and hack costs can be set one at a time. Reaper chip safety is for the Clampdown prison job and is not part of Classic all-assists. These persist in settings.json and come back when you load a save.")
                 ImGui.EndTabItem()
             end
             if ImGui.BeginTabItem("Combat Comfort") then

@@ -203,4 +203,108 @@ function Compat.infiniteStamina(enabled)
     return ok
 end
 
+local REAPER_GOD_SOURCE = "ChoomAssistReaper"
+
+function Compat.cname(name)
+    local ok, value = pcall(function()
+        if CName ~= nil and CName.new ~= nil then
+            return CName.new(name)
+        end
+        return name
+    end)
+    if ok and value ~= nil then
+        return value
+    end
+    return name
+end
+
+function Compat.godModeType(name)
+    local ok, value = pcall(function()
+        return gameGodModeType[name]
+    end)
+    if ok then
+        return value
+    end
+    return nil
+end
+
+function Compat.setFact(name, value)
+    local ok = pcall(function()
+        Game.GetQuestsSystem():SetFactStr(name, value)
+    end)
+    return ok
+end
+
+function Compat.setGodMode(enabled, sourceName)
+    if not Compat.inSession() then
+        return false
+    end
+    local source = Compat.cname(sourceName or REAPER_GOD_SOURCE)
+    local ok = pcall(function()
+        local player = Compat.player()
+        local id = player:GetEntityID()
+        local sys = Game.GetGodModeSystem()
+        local immortal = Compat.godModeType("Immortal")
+        local invulnerable = Compat.godModeType("Invulnerable")
+        if enabled then
+            if immortal ~= nil then
+                sys:AddGodMode(id, immortal, source)
+            end
+            if invulnerable ~= nil then
+                sys:AddGodMode(id, invulnerable, source)
+            end
+            pcall(function()
+                if immortal ~= nil then
+                    sys:EnableOverride(id, immortal, source)
+                end
+            end)
+            pcall(function()
+                Game.GetStatusEffectSystem():ApplyStatusEffect(id, "BaseStatusEffect.Invulnerable")
+            end)
+        else
+            pcall(function()
+                sys:DisableOverride(id, source)
+            end)
+            if immortal ~= nil then
+                sys:RemoveGodMode(id, immortal, source)
+            end
+            if invulnerable ~= nil then
+                sys:RemoveGodMode(id, invulnerable, source)
+            end
+            pcall(function()
+                sys:ClearGodMode(id, source)
+            end)
+            pcall(function()
+                Game.GetStatusEffectSystem():RemoveStatusEffect(id, "BaseStatusEffect.Invulnerable")
+            end)
+        end
+    end)
+    return ok
+end
+
+-- Clampdown (mq062) Reaper chip: scripted activation kill, not a player stat.
+-- Immortality plus the death-menu fact keep V from flatlining if the
+-- countdown finishes or guards trigger the chip.
+function Compat.setReaperSafety(enabled)
+    local godOk = Compat.setGodMode(enabled, REAPER_GOD_SOURCE)
+    local factOk = Compat.setFact("block_death_menu", enabled and 1 or 0)
+    return godOk or factOk
+end
+
+function Compat.refillHealth()
+    if not Compat.inSession() then
+        return
+    end
+    pcall(function()
+        local player = Compat.player()
+        Game.GetStatPoolsSystem():RequestSettingStatPoolValue(
+            player:GetEntityID(),
+            gamedataStatPoolType.Health,
+            100.0,
+            player,
+            true
+        )
+    end)
+end
+
 return Compat

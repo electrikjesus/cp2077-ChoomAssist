@@ -405,6 +405,21 @@ define({
     end,
 })
 
+define({
+    id = "reaperChipSafety",
+    tab = "play",
+    group = "Clampdown (Update 2.5)",
+    kind = "toggle",
+    inClassic = false,
+    label = "Reaper chip safety",
+    tooltip = "Stops the Night City Prison Reaper chip from flatlining you if guards activate it or the server countdown hits 100%. The Clampdown job still runs; you still deactivate chips at the Reaper Chip Server. Not included in Classic all-assists. Turn it off after the prison.",
+    default = 1, classic = 1,
+    applySpecial = function(enabled)
+        local ok = Compat.setReaperSafety(enabled)
+        return ok, {}
+    end,
+})
+
 local movementFlags = {
     { id = "canCrouch", label = "Always allow crouch", stat = "CanCrouch" },
     { id = "canSprint", label = "Always allow sprint", stat = "CanSprint" },
@@ -781,6 +796,9 @@ function Assists.remove(id)
     if spec and spec.id == "infiniteStamina" then
         Compat.infiniteStamina(false)
     end
+    if spec and spec.id == "reaperChipSafety" then
+        Compat.setReaperSafety(false)
+    end
 end
 
 local function mutexStamina(id)
@@ -861,6 +879,70 @@ function Assists.commit(id)
     Assists.apply(id)
 end
 
+function Assists.reaperSafetyEnabled()
+    Assists.ensureState()
+    return Assists.state.reaperChipSafety ~= nil and Assists.state.reaperChipSafety.enabled == true
+end
+
+function Assists.shouldBlockReaperKill(entity)
+    if not Assists.reaperSafetyEnabled() then
+        return false
+    end
+    if entity == nil then
+        return true
+    end
+    local ok, isPlayer = pcall(function()
+        return entity:IsPlayer()
+    end)
+    return ok and isPlayer == true
+end
+
+local reaperTickAccum = 0
+
+function Assists.tick(delta)
+    if not Assists.reaperSafetyEnabled() then
+        return
+    end
+    reaperTickAccum = reaperTickAccum + (delta or 0)
+    if reaperTickAccum < 0.5 then
+        return
+    end
+    reaperTickAccum = 0
+    if not Compat.inSession() then
+        return
+    end
+    Compat.setReaperSafety(true)
+end
+
+function Assists.installHooks()
+    pcall(function()
+        Override("PlayerPuppet", "OnForcedDeathEvent", function(this, evt, wrapped)
+            if Assists.shouldBlockReaperKill(this) then
+                Compat.refillHealth()
+                return
+            end
+            if wrapped ~= nil then
+                wrapped(evt)
+            end
+        end)
+    end)
+    pcall(function()
+        Observe("PlayerPuppet", "SetWarningMessage", function(_, _, msgType)
+            if not Assists.reaperSafetyEnabled() then
+                return
+            end
+            local isReaper = false
+            pcall(function()
+                isReaper = msgType == SimpleMessageType.Reaper
+            end)
+            if isReaper then
+                Compat.setReaperSafety(true)
+                Compat.refillHealth()
+            end
+        end)
+    end)
+end
+
 function Assists.reapplyAll()
     Assists.ensureState()
     if not Compat.inSession() then
@@ -881,6 +963,7 @@ function Assists.clearHandles()
     end
     Assists.handles = {}
     Compat.infiniteStamina(false)
+    Compat.setReaperSafety(false)
 end
 
 function Assists.exportState()
