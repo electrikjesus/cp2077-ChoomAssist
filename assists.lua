@@ -127,6 +127,9 @@ define({
         Compat.infiniteStamina(false)
         return true, {}
     end,
+    onRemove = function()
+        Compat.infiniteStamina(false)
+    end,
 })
 
 define({
@@ -411,12 +414,14 @@ define({
     group = "Clampdown (Update 2.5)",
     kind = "toggle",
     inClassic = false,
-    label = "Reaper chip safety",
-    tooltip = "Stops the Night City Prison Reaper chip from flatlining you if guards activate it or the server countdown hits 100%. The Clampdown job still runs; you still deactivate chips at the Reaper Chip Server. Not included in Classic all-assists. Turn it off after the prison.",
+    label = "Disarm Reaper chip when guards spot you",
+    tooltip = "Clampdown prison job: when guards see you armed and start Activatin' Reaper, the countdown runs out without killing you. You still fight or sneak past the guards. Does not stop the 24-second countdown at the Reaper Chip Server; pick Deactivate your Reaper first there. Not part of Classic all-assists.",
     default = 1, classic = 1,
     applySpecial = function(enabled)
-        local ok = Compat.setReaperSafety(enabled)
-        return ok, {}
+        if not enabled then
+            return true, {}
+        end
+        return Compat.disarmReaperGuards(), {}
     end,
 })
 
@@ -506,6 +511,39 @@ define({
         return { { "Adrenaline", "AdditiveMultiplier", times(value) } }
     end,
 })
+
+local function godModeRow(id, kindName, label, tooltip)
+    define({
+        id = id,
+        tab = "combat",
+        group = "God mode",
+        kind = "toggle",
+        inClassic = false,
+        label = label,
+        tooltip = tooltip,
+        default = 1, classic = 1,
+        applySpecial = function(enabled)
+            return Compat.setGodMode(enabled, kindName), {}
+        end,
+        onRemove = function()
+            Compat.setGodMode(false, kindName)
+        end,
+    })
+end
+
+godModeRow(
+    "immortal",
+    "Immortal",
+    "Immortal (cannot die)",
+    "You still take damage and your health bar moves, but it stops at 1 instead of zero. Scripted quest kills can still end the run. Not part of Classic all-assists."
+)
+
+godModeRow(
+    "invulnerable",
+    "Invulnerable",
+    "Invulnerable (no damage)",
+    "Incoming damage is ignored, so your health does not drop. Scripted quest kills can still end the run. Not part of Classic all-assists."
+)
 
 local function remainingFromPercentCut(value)
     if value <= 0 then
@@ -793,11 +831,8 @@ function Assists.remove(id)
     end
     Assists.handles[id] = nil
     local spec = Assists.byId[id]
-    if spec and spec.id == "infiniteStamina" then
-        Compat.infiniteStamina(false)
-    end
-    if spec and spec.id == "reaperChipSafety" then
-        Compat.setReaperSafety(false)
+    if spec and spec.onRemove then
+        spec.onRemove()
     end
 end
 
@@ -836,6 +871,9 @@ function Assists.apply(id)
     if spec == nil or state == nil or not state.enabled then
         return
     end
+    if not Compat.inSession() then
+        return
+    end
     if spec.applySpecial then
         local ok, handles = spec.applySpecial(true)
         if ok then
@@ -845,9 +883,6 @@ function Assists.apply(id)
             Assists.unavailable[id] = true
             Compat.status(spec.label .. " doesn't work on this patch")
         end
-        return
-    end
-    if not Compat.inSession() then
         return
     end
     local maps = spec.modifiers(state.value or spec.default)
@@ -879,68 +914,20 @@ function Assists.commit(id)
     Assists.apply(id)
 end
 
-function Assists.reaperSafetyEnabled()
-    Assists.ensureState()
-    return Assists.state.reaperChipSafety ~= nil and Assists.state.reaperChipSafety.enabled == true
-end
-
-function Assists.shouldBlockReaperKill(entity)
-    if not Assists.reaperSafetyEnabled() then
-        return false
-    end
-    if entity == nil then
-        return true
-    end
-    local ok, isPlayer = pcall(function()
-        return entity:IsPlayer()
-    end)
-    return ok and isPlayer == true
-end
-
 local reaperTickAccum = 0
 
+-- The guard encounter can re-run from a checkpoint, so keep the fact set.
 function Assists.tick(delta)
-    if not Assists.reaperSafetyEnabled() then
+    local state = Assists.state.reaperChipSafety
+    if state == nil or not state.enabled then
         return
     end
     reaperTickAccum = reaperTickAccum + (delta or 0)
-    if reaperTickAccum < 0.5 then
+    if reaperTickAccum < 1 then
         return
     end
     reaperTickAccum = 0
-    if not Compat.inSession() then
-        return
-    end
-    Compat.setReaperSafety(true)
-end
-
-function Assists.installHooks()
-    pcall(function()
-        Override("PlayerPuppet", "OnForcedDeathEvent", function(this, evt, wrapped)
-            if Assists.shouldBlockReaperKill(this) then
-                Compat.refillHealth()
-                return
-            end
-            if wrapped ~= nil then
-                wrapped(evt)
-            end
-        end)
-    end)
-    pcall(function()
-        Observe("PlayerPuppet", "SetWarningMessage", function(_, _, msgType)
-            if not Assists.reaperSafetyEnabled() then
-                return
-            end
-            local isReaper = false
-            pcall(function()
-                isReaper = msgType == SimpleMessageType.Reaper
-            end)
-            if isReaper then
-                Compat.setReaperSafety(true)
-                Compat.refillHealth()
-            end
-        end)
-    end)
+    Compat.disarmReaperGuards()
 end
 
 function Assists.reapplyAll()
@@ -963,7 +950,6 @@ function Assists.clearHandles()
     end
     Assists.handles = {}
     Compat.infiniteStamina(false)
-    Compat.setReaperSafety(false)
 end
 
 function Assists.exportState()

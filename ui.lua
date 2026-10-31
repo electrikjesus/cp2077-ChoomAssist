@@ -324,11 +324,11 @@ function UI.draw()
         ImGui.Spacing()
         if ImGui.BeginTabBar("ChoomAssistTabs") then
             if ImGui.BeginTabItem("Play Assist") then
-                drawAssistTab("play", "Tick a row to turn it on, then set how much with the slider. Untick to restore the game default. Rows are split so grenades, RAM, skill checks, and hack costs can be set one at a time. Reaper chip safety is for the Clampdown prison job and is not part of Classic all-assists. These persist in settings.json and come back when you load a save.")
+                drawAssistTab("play", "Tick a row to turn it on, then set how much with the slider. Untick to restore the game default. Rows are split so grenades, RAM, skill checks, and hack costs can be set one at a time. The Clampdown Reaper chip row is for the prison job and is not part of Classic all-assists. These persist in settings.json and come back when you load a save.")
                 ImGui.EndTabItem()
             end
             if ImGui.BeginTabItem("Combat Comfort") then
-                drawAssistTab("combat", "Easier fights. Crit chance and One-shot crit damage are on this tab (that is what Classic all-assists uses for crit). Detection, visibility, and mitigation are separate sliders. Optical camo, evasion, and hack immunity are Full stealth extras — Classic does not turn those on.")
+                drawAssistTab("combat", "Easier fights. Immortal and Invulnerable (god mode) are separate rows and not part of Classic. Crit chance and One-shot crit damage are on this tab (that is what Classic all-assists uses for crit). Detection, visibility, and mitigation are separate sliders. Optical camo, evasion, and hack immunity are Full stealth extras — Classic does not turn those on.")
                 ImGui.EndTabItem()
             end
             if ImGui.BeginTabItem("Visual Comfort") then

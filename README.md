@@ -25,8 +25,8 @@ Don't run an old copy and ChoomAssist at the same time.
 
 ## Tabs
 
-- **Play Assist**: carry, falls, healing (speed / charges), stamina, oxygen, breach time and loot, Body / Intelligence / Technical skill checks, RAM, RAM on takedown, ultimate / device / stealth hack costs, grenades, launcher, camo mask, overclock, apartment buffs, movement flags, Reaper chip safety (Clampdown). Tick a row, then use the slider.
-- **Combat Comfort**: armor, explosion / DoT, adrenaline, detection, visibility, TBH cooldown, mitigation chance / strength, crit chance, crit damage, one-shot crits, quickhack spread distance / targets. Optical camo, evasion, and hack immunity / shield are Full stealth extras on this tab.
+- **Play Assist**: carry, falls, healing (speed / charges), stamina, oxygen, breach time and loot, Body / Intelligence / Technical skill checks, RAM, RAM on takedown, ultimate / device / stealth hack costs, grenades, launcher, camo mask, overclock, apartment buffs, movement flags, disarm the guards' Reaper chip (Clampdown). Tick a row, then use the slider.
+- **Combat Comfort**: armor, explosion / DoT, adrenaline, Immortal / Invulnerable god mode, detection, visibility, TBH cooldown, mitigation chance / strength, crit chance, crit damage, one-shot crits, quickhack spread distance / targets. Optical camo, evasion, and hack immunity / shield are Full stealth extras on this tab.
 - **Visual Comfort**: motion blur, film grain, chromatic aberration, depth of field, bloom, flares, heat haze, and similar.
 - **Performance**: shadows, GI, fog, screen-space, crowds, async compute. Low-End, Balanced, and Reset to Vanilla presets.
 - **Quality of Life**: eddies, level / Street Cred / attributes, skillbooks, cyberware and item grants, Classic all-assists, full stealth. Cyberware goes to inventory; equip it at a ripper.

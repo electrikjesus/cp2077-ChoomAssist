@@ -203,8 +203,6 @@ function Compat.infiniteStamina(enabled)
     return ok
 end
 
-local REAPER_GOD_SOURCE = "ChoomAssistReaper"
-
 function Compat.cname(name)
     local ok, value = pcall(function()
         if CName ~= nil and CName.new ~= nil then
@@ -235,76 +233,74 @@ function Compat.setFact(name, value)
     return ok
 end
 
-function Compat.setGodMode(enabled, sourceName)
+function Compat.getFact(name)
+    local ok, value = pcall(function()
+        return Game.GetQuestsSystem():GetFactStr(name)
+    end)
+    if ok then
+        return value
+    end
+    return nil
+end
+
+-- kindName is "Immortal" (health cannot reach zero) or "Invulnerable" (no damage).
+function Compat.setGodMode(enabled, kindName)
     if not Compat.inSession() then
         return false
     end
-    local source = Compat.cname(sourceName or REAPER_GOD_SOURCE)
+    local kind = Compat.godModeType(kindName)
+    if kind == nil then
+        return false
+    end
+    local source = Compat.cname("ChoomAssist" .. kindName)
     local ok = pcall(function()
-        local player = Compat.player()
-        local id = player:GetEntityID()
+        local id = Compat.player():GetEntityID()
         local sys = Game.GetGodModeSystem()
-        local immortal = Compat.godModeType("Immortal")
-        local invulnerable = Compat.godModeType("Invulnerable")
         if enabled then
-            if immortal ~= nil then
-                sys:AddGodMode(id, immortal, source)
-            end
-            if invulnerable ~= nil then
-                sys:AddGodMode(id, invulnerable, source)
-            end
-            pcall(function()
-                if immortal ~= nil then
-                    sys:EnableOverride(id, immortal, source)
-                end
-            end)
-            pcall(function()
-                Game.GetStatusEffectSystem():ApplyStatusEffect(id, "BaseStatusEffect.Invulnerable")
-            end)
+            sys:AddGodMode(id, kind, source)
         else
-            pcall(function()
-                sys:DisableOverride(id, source)
-            end)
-            if immortal ~= nil then
-                sys:RemoveGodMode(id, immortal, source)
-            end
-            if invulnerable ~= nil then
-                sys:RemoveGodMode(id, invulnerable, source)
-            end
-            pcall(function()
-                sys:ClearGodMode(id, source)
-            end)
-            pcall(function()
-                Game.GetStatusEffectSystem():RemoveStatusEffect(id, "BaseStatusEffect.Invulnerable")
-            end)
+            sys:RemoveGodMode(id, kind, source)
         end
     end)
+    if ok and kindName == "Invulnerable" then
+        pcall(function()
+            local id = Compat.player():GetEntityID()
+            local effects = Game.GetStatusEffectSystem()
+            if enabled then
+                effects:ApplyStatusEffect(id, "BaseStatusEffect.Invulnerable")
+            else
+                effects:RemoveStatusEffect(id, "BaseStatusEffect.Invulnerable")
+            end
+        end)
+    end
     return ok
 end
 
--- Clampdown (mq062) Reaper chip: scripted activation kill, not a player stat.
--- Immortality plus the death-menu fact keep V from flatlining if the
--- countdown finishes or guards trigger the chip.
-function Compat.setReaperSafety(enabled)
-    local godOk = Compat.setGodMode(enabled, REAPER_GOD_SOURCE)
-    local factOk = Compat.setFact("block_death_menu", enabled and 1 or 0)
-    return godOk or factOk
+-- Clampdown (mq062) guard encounter: every Reaper kill branch waits on this
+-- fact being 0, and the quest sets it to 1 when the guards are dead.
+local REAPER_GUARD_FACT = "mq062_Stealth_Bathroom_Fact_Combat_ChipDeactivated"
+
+function Compat.disarmReaperGuards()
+    if not Compat.inSession() then
+        return false
+    end
+    local current = Compat.getFact(REAPER_GUARD_FACT)
+    if current == nil then
+        return false
+    end
+    if current < 1 then
+        return Compat.setFact(REAPER_GUARD_FACT, 1)
+    end
+    return true
 end
 
-function Compat.refillHealth()
-    if not Compat.inSession() then
-        return
+-- An earlier ChoomAssist build set this fact, which leaves V stuck on the
+-- floor with no pause menu after a scripted kill. Saves may still carry it.
+function Compat.clearDeathMenuBlock()
+    local current = Compat.getFact("block_death_menu")
+    if current ~= nil and current ~= 0 then
+        Compat.setFact("block_death_menu", 0)
     end
-    pcall(function()
-        local player = Compat.player()
-        Game.GetStatPoolsSystem():RequestSettingStatPoolValue(
-            player:GetEntityID(),
-            gamedataStatPoolType.Health,
-            100.0,
-            player,
-            true
-        )
-    end)
 end
 
 return Compat

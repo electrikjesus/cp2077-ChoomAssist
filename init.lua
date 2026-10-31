@@ -92,6 +92,7 @@ local function onPlayerAttached(self)
     if skip then
         return
     end
+    Compat.clearDeathMenuBlock()
     Assists.reapplyAll()
     QoL.reapplyStealth()
 end
@@ -118,7 +119,6 @@ registerForEvent("onInit", function()
     loadSettings()
     Observe("PlayerPuppet", "OnGameAttached", onPlayerAttached)
     Observe("PlayerPuppet", "OnDetach", onPlayerDetach)
-    Assists.installHooks()
     print("************************************************")
     print("* ChoomAssist loaded (CET overlay, no hotkeys required)")
     print("************************************************")
